@@ -1,0 +1,10 @@
+# Ignore Python virtual environments
+/.venv/
+ai-career-platform/backend/venv/
+# Ignore common Python build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+# Ignore environment files
+.env
