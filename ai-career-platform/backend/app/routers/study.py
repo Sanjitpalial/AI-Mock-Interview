@@ -106,6 +106,9 @@ async def upload_pdf(file: UploadFile = File(...)):
 class QuestionRequest(BaseModel):
     question: str
 
+class QuizRequest(BaseModel):
+    topic: str
+
 
 # Ask Question API
 @router.post("/ask-question")
@@ -168,4 +171,70 @@ Question:
         "question": data.question,
         "answer": answer,
         "retrieved_chunks": documents
+    }
+# Quiz Generator API
+@router.post("/generate-quiz")
+async def generate_quiz(data: QuizRequest):
+
+    # Check collection
+    if collection.count() == 0:
+        return {
+            "message": "Please upload a PDF first."
+        }
+
+    # Generate embedding
+    query_embedding = model.encode([data.topic]).tolist()
+
+    # Retrieve relevant chunks
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=3
+    )
+
+    documents = results["documents"][0]
+
+    context = "\n".join(documents)
+
+    # Prompt
+    prompt = f"""
+You are an AI Quiz Generator.
+
+Generate 5 multiple choice questions from the provided context.
+
+Rules:
+- Each question must have 4 options
+- Provide correct answer
+- Keep questions simple and clear
+
+Context:
+{context}
+
+Return format:
+
+Q1:
+Options:
+A.
+B.
+C.
+D.
+
+Answer:
+"""
+
+    # Groq API
+    chat_completion = groq_client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        model="llama-3.1-8b-instant"
+    )
+
+    quiz = chat_completion.choices[0].message.content
+
+    return {
+        "topic": data.topic,
+        "quiz": quiz
     }
