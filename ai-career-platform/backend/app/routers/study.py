@@ -1,3 +1,4 @@
+from langchain.memory import ConversationBufferMemory
 from fastapi import APIRouter, UploadFile, File
 from pydantic import BaseModel
 
@@ -24,9 +25,15 @@ groq_client = Groq(
     api_key=os.getenv("GROQ_API_KEY")
 )
 
+# Conversation Memory
+memory = ConversationBufferMemory(
+    return_messages=True
+)
+
 # ChromaDB setup
 client = chromadb.Client()
 
+# Create collection only once
 collection = client.get_or_create_collection("study_material")
 
 # Embedding model
@@ -74,16 +81,6 @@ async def upload_pdf(file: UploadFile = File(...)):
             "message": "No text found in PDF"
         }
 
-    # Delete old collection if exists
-    try:
-        client.delete_collection("study_material")
-    except:
-        pass
-
-    # Create fresh collection
-    global collection
-    collection = client.get_or_create_collection("study_material")
-
     # Generate embeddings
     embeddings = model.encode(chunks).tolist()
 
@@ -91,22 +88,36 @@ async def upload_pdf(file: UploadFile = File(...)):
     collection.add(
         documents=chunks,
         embeddings=embeddings,
-        ids=[f"id_{i}" for i in range(len(chunks))]
+        metadatas=[
+            {"source": file.filename}
+            for _ in range(len(chunks))
+        ],
+        ids=[
+            f"{file.filename}_{i}"
+            for i in range(len(chunks))
+        ]
     )
 
     print("COLLECTION COUNT:", collection.count())
 
     return {
         "message": "PDF processed successfully",
+        "file_name": file.filename,
         "total_chunks": len(chunks)
     }
 
 
-# Question model
+# Request Models
 class QuestionRequest(BaseModel):
     question: str
+    pdf_name: str = None
+
 
 class QuizRequest(BaseModel):
+    topic: str
+
+
+class FlashcardRequest(BaseModel):
     topic: str
 
 
@@ -124,12 +135,20 @@ async def ask_question(data: QuestionRequest):
     query_embedding = model.encode([data.question]).tolist()
 
     # Retrieve relevant chunks
-    results = collection.query(
+    if data.pdf_name:
+        results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=3,
+        where={"source": data.pdf_name}
+        )
+    else:
+        results = collection.query(
         query_embeddings=query_embedding,
         n_results=3
-    )
+        )
 
     documents = results["documents"][0]
+    metadatas = results["metadatas"][0]
 
     # If no relevant documents found
     if len(documents) == 0:
@@ -139,17 +158,35 @@ async def ask_question(data: QuestionRequest):
 
     context = "\n".join(documents)
 
-    # Prompt for AI
+    # Conversation history
+    chat_history = memory.load_memory_variables({})
+
+    history = chat_history.get("history", "")
+
+    # Prompt
     prompt = f"""
 You are an AI Study Assistant.
 
-Answer the question ONLY from the provided context.
+Use the conversation history and provided context
+to answer the user's question.
+
+IMPORTANT RULES:
+- Answer ONLY from the provided context
+- If answer is not in context, say:
+  "This information is not available in the uploaded PDF."
+- Keep answers simple and student friendly
+- Do not make up information
+
+Conversation History:
+{history}
 
 Context:
 {context}
 
 Question:
 {data.question}
+
+Answer:
 """
 
     print("QUESTION:", data.question)
@@ -167,11 +204,79 @@ Question:
 
     answer = chat_completion.choices[0].message.content
 
+    # Save memory
+    memory.save_context(
+        {"input": data.question},
+        {"output": answer}
+    )
+
+    # Extract sources
+    sources = list(set([
+        metadata["source"]
+        for metadata in metadatas
+    ]))
+
     return {
         "question": data.question,
         "answer": answer,
+        "sources": sources,
         "retrieved_chunks": documents
     }
+
+
+# Generate Notes API
+@router.post("/generate-notes")
+async def generate_notes():
+
+    # Check collection
+    if collection.count() == 0:
+        return {
+            "message": "Please upload a PDF first."
+        }
+
+    # Get all stored documents
+    results = collection.get()
+
+    documents = results["documents"]
+
+    # Combine all text
+    full_text = "\n".join(documents)
+
+    # Prompt
+    prompt = f"""
+You are an AI Notes Generator.
+
+Create well-structured study notes from the following content.
+
+Rules:
+- concise
+- easy to revise
+- point-wise
+- student friendly
+- include headings
+
+Content:
+{full_text}
+"""
+
+    # Groq API
+    chat_completion = groq_client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        model="llama-3.1-8b-instant"
+    )
+
+    notes = chat_completion.choices[0].message.content
+
+    return {
+        "generated_notes": notes
+    }
+
+
 # Quiz Generator API
 @router.post("/generate-quiz")
 async def generate_quiz(data: QuizRequest):
@@ -205,6 +310,7 @@ Rules:
 - Each question must have 4 options
 - Provide correct answer
 - Keep questions simple and clear
+- Questions should come ONLY from context
 
 Context:
 {context}
@@ -237,4 +343,110 @@ Answer:
     return {
         "topic": data.topic,
         "quiz": quiz
+    }
+
+
+# Flashcard Generator API
+@router.post("/generate-flashcards")
+async def generate_flashcards(data: FlashcardRequest):
+
+    # Check collection
+    if collection.count() == 0:
+        return {
+            "message": "Please upload a PDF first."
+        }
+
+    # Generate embedding
+    query_embedding = model.encode([data.topic]).tolist()
+
+    # Retrieve relevant chunks
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=5
+    )
+
+    documents = results["documents"][0]
+
+    context = "\n".join(documents)
+
+    # Prompt
+    prompt = f"""
+Create 5 flashcards from the provided context.
+
+Rules:
+- Keep answers short
+- Student friendly
+- Only use provided context
+
+Format:
+
+Q:
+A:
+
+Context:
+{context}
+"""
+
+    # Groq API
+    chat_completion = groq_client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        model="llama-3.1-8b-instant"
+    )
+
+    flashcards = chat_completion.choices[0].message.content
+
+    return {
+        "topic": data.topic,
+        "flashcards": flashcards
+    }
+@router.get("/uploaded-pdfs")
+async def uploaded_pdfs():
+
+    results = collection.get()
+
+    metadatas = results["metadatas"]
+
+    pdfs = list(set([
+        metadata["source"]
+        for metadata in metadatas
+    ]))
+
+    return {
+        "uploaded_pdfs": pdfs,
+        "total_pdfs": len(pdfs)
+    }   
+
+@router.delete("/delete-pdf/{pdf_name}")
+async def delete_pdf(pdf_name: str):
+
+    # Get all documents
+    results = collection.get()
+
+    ids_to_delete = []
+    metadatas = results["metadatas"]
+    ids = results["ids"]
+
+    # Find matching PDF chunks
+    for i, metadata in enumerate(metadatas):
+
+        if metadata["source"] == pdf_name:
+            ids_to_delete.append(ids[i])
+
+    # If no PDF found
+    if len(ids_to_delete) == 0:
+        return {
+            "message": f"{pdf_name} not found."
+        }
+
+    # Delete chunks
+    collection.delete(ids=ids_to_delete)
+
+    return {
+        "message": f"{pdf_name} deleted successfully.",
+        "deleted_chunks": len(ids_to_delete)
     }
