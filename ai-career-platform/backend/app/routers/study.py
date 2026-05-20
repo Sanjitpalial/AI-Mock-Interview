@@ -1,3 +1,12 @@
+from app.database import db
+from app.database import (
+    pdf_collection,
+    chat_collection,
+    notes_collection,
+    quiz_collection,
+    flashcard_collection,
+    roadmap_collection
+)  
 from langchain.memory import ConversationBufferMemory
 from fastapi import APIRouter, UploadFile, File
 from pydantic import BaseModel
@@ -99,6 +108,10 @@ async def upload_pdf(file: UploadFile = File(...)):
     )
 
     print("COLLECTION COUNT:", collection.count())
+    pdf_collection.insert_one({
+    "file_name": file.filename,
+    "total_chunks": len(chunks)
+    })
 
     return {
         "message": "PDF processed successfully",
@@ -118,6 +131,9 @@ class QuizRequest(BaseModel):
 
 
 class FlashcardRequest(BaseModel):
+    topic: str
+
+class RoadmapRequest(BaseModel):
     topic: str
 
 
@@ -215,6 +231,11 @@ Answer:
         metadata["source"]
         for metadata in metadatas
     ]))
+    chat_collection.insert_one({
+    "question": data.question,
+    "answer": answer,
+    "sources": sources
+    })
 
     return {
         "question": data.question,
@@ -271,6 +292,9 @@ Content:
     )
 
     notes = chat_completion.choices[0].message.content
+    notes_collection.insert_one({
+    "notes": notes
+    })
 
     return {
         "generated_notes": notes
@@ -339,6 +363,10 @@ Answer:
     )
 
     quiz = chat_completion.choices[0].message.content
+    quiz_collection.insert_one({
+    "topic": data.topic,
+    "quiz": quiz
+    })
 
     return {
         "topic": data.topic,
@@ -399,11 +427,17 @@ Context:
     )
 
     flashcards = chat_completion.choices[0].message.content
+    flashcard_collection.insert_one({
+    "topic": data.topic,
+    "flashcards": flashcards
+    })
 
     return {
         "topic": data.topic,
         "flashcards": flashcards
     }
+
+
 @router.get("/uploaded-pdfs")
 async def uploaded_pdfs():
 
@@ -450,3 +484,62 @@ async def delete_pdf(pdf_name: str):
         "message": f"{pdf_name} deleted successfully.",
         "deleted_chunks": len(ids_to_delete)
     }
+
+# Study Roadmap Generator API
+@router.post("/generate-roadmap")
+async def generate_roadmap(data: RoadmapRequest):
+
+    prompt = f"""
+You are an AI Study Roadmap Generator.
+
+Create a complete learning roadmap for:
+{data.topic}
+
+Rules:
+- Beginner to advanced progression
+- Step-by-step structure
+- Include phases or weeks
+- Mention important concepts
+- Student friendly
+- Easy to follow
+
+Format example:
+
+Phase 1:
+- Topic 1
+- Topic 2
+
+Phase 2:
+- Topic 3
+- Topic 4
+"""
+
+    try:
+
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            model="llama-3.1-8b-instant"
+        )
+
+        roadmap = chat_completion.choices[0].message.content
+        roadmap_collection.insert_one({
+    "topic": data.topic,
+    "roadmap": roadmap
+    })
+
+        return {
+            "topic": data.topic,
+            "roadmap": roadmap
+        }
+
+    except Exception as e:
+
+        return {
+            "message": "Roadmap generation failed.",
+            "error": str(e)
+        }
