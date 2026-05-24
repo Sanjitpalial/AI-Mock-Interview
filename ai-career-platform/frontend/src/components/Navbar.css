@@ -1,0 +1,396 @@
+/* ============================================================
+   CareerAI — Navbar.css
+   Matches home.css design system (deep-space tech noir)
+   ============================================================ */
+
+   
+/* ── Navbar Shell ── */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+/* Frosted glass on scroll */
+.navbar--scrolled {
+  background: rgba(8, 12, 18, 0.82);
+  border-bottom-color: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ── Inner row ── */
+.navbar__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 5%;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* ── Brand ── */
+.navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.navbar__logo {
+  width: 36px;
+  height: 36px;
+  background: var(--accent, #00d4ff);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.4);
+  transition: box-shadow 0.22s ease;
+}
+
+.navbar__brand:hover .navbar__logo {
+  box-shadow: 0 0 28px rgba(0, 212, 255, 0.65);
+}
+
+.navbar__title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #e8f0fe);
+}
+
+/* ── Desktop nav links ── */
+.navbar__links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.navbar__link {
+  position: relative;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary, #e8f0fe);
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: color 0.22s ease, background 0.22s ease;
+}
+
+.navbar__link:hover {
+  color: var(--accent, #00d4ff);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.navbar__link--active {
+  color: var(--accent, #00d4ff);
+}
+
+/* Framer Motion underline (layoutId="nav-underline") */
+.navbar__link-underline {
+  position: absolute;
+  bottom: -2px;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent, #00d4ff);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+}
+
+/* ── Desktop action buttons ── */
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Ghost button (Sign In) */
+.btn--ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: var(--text-secondary, #d4dceb);
+  text-decoration: none;
+  transition: color 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+}
+
+.btn--ghost:hover {
+  color: var(--text-primary, #e8f0fe);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Primary button (Get Started) — uses home.css .btn--primary if shared,
+   but scoped here for Navbar too */
+.navbar__actions .btn--primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent, #00d4ff);
+  color: #080c12;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.navbar__actions .btn--primary:hover {
+  background: #33dcff;
+  box-shadow: 0 0 36px rgba(0, 212, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ── Hamburger button ── */
+.navbar__menu-btn {
+  display: none;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 7px;
+  cursor: pointer;
+  color: var(--text-secondary, #8899bb);
+  margin-left: auto;
+  transition: color 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+}
+
+.navbar__menu-btn:hover {
+  color: var(--accent, #00d4ff);
+  border-color: rgba(0, 212, 255, 0.3);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+/* ══════════════════════════════════════════
+   MOBILE DRAWER
+══════════════════════════════════════════ */
+.navbar__mobile {
+  overflow: hidden;
+  background: rgba(8, 12, 18, 0.96);
+  border-top: 1px solid rgba(0, 212, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.navbar__mobile-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 5% 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navbar__mobile-link {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary, #8899bb);
+  padding: 12px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: color 0.22s ease, background 0.22s ease;
+}
+
+.navbar__mobile-link:hover {
+  color: var(--text-primary, #e8f0fe);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.navbar__mobile-link--active {
+  color: var(--accent, #00d4ff);
+  background: rgba(0, 212, 255, 0.07);
+}
+
+.navbar__mobile-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 8px 0;
+}
+
+.navbar__mobile-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary, #8899bb);
+  padding: 12px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: color 0.22s ease, background 0.22s ease;
+}
+
+.navbar__mobile-action:hover {
+  color: var(--text-primary, #e8f0fe);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.navbar__mobile-action--accent {
+  color: var(--accent, #00d4ff);
+  background: rgba(0, 212, 255, 0.07);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  margin-top: 4px;
+}
+
+.navbar__mobile-action--accent:hover {
+  color: var(--accent, #00d4ff);
+  background: rgba(0, 212, 255, 0.13);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE — show/hide
+══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .navbar__links,
+  .navbar__actions { display: none; }
+
+  .navbar__menu-btn { display: flex; }
+
+  .navbar__inner { gap: 0; }
+}
+
+@media (min-width: 769px) {
+  .navbar__mobile { display: none !important; }
+}
+
+.navbar__user-menu {
+  position: relative;
+}
+
+.navbar__user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 14px;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: var(--text-primary, #e8f0fe);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.navbar__user-pill:hover,
+.navbar__user-pill--open {
+  background: rgba(0, 212, 255, 0.16);
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+}
+
+.navbar__user-pill-text {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar__chevron {
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+
+.navbar__chevron--open {
+  transform: rotate(180deg);
+}
+
+.navbar__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(13, 20, 32, 0.98);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(16px);
+  z-index: 120;
+}
+
+.navbar__dropdown-email {
+  margin: 4px 10px 8px;
+  font-size: 0.72rem;
+  font-family: 'DM Mono', monospace;
+  color: var(--text-muted, #516799);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #94a4c4);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.navbar__dropdown-item:hover {
+  color: var(--text-primary, #e8f0fe);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navbar__dropdown-item--danger:hover {
+  color: #ff8a8a;
+  background: rgba(255, 100, 100, 0.08);
+}
+
+.navbar__dropdown-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 6px 4px;
+}
+
+.navbar__user-label {
+  color: var(--text-secondary, #d4dceb);
+  font-size: 0.85rem;
+}
+
+.navbar__mobile-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: var(--accent, #00d4ff);
+  font-weight: 600;
+}

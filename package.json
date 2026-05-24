@@ -1,0 +1,10 @@
+{
+  "name": "ai-mock-interview",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix ai-career-platform/frontend",
+    "build": "npm run build --prefix ai-career-platform/frontend",
+    "preview": "npm run preview --prefix ai-career-platform/frontend",
+    "install:frontend": "npm install --prefix ai-career-platform/frontend"
+  }
+}

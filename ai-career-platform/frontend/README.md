@@ -1,16 +1,37 @@
-# React + Vite
+# CareerAI Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Each page and component has **its own CSS file** next to its `.jsx` file. No shared `styles/` folder.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cd ai-career-platform/frontend
+npm install
+npm run dev
+```
 
-## React Compiler
+The dev server runs at **http://localhost:5173**. API requests use the **`/api` prefix**, which Vite proxies to the FastAPI backend at **http://127.0.0.1:8000** (see `vite.config.js`). Start the backend from `ai-career-platform/backend` with `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Optional: set `VITE_API_URL=http://127.0.0.1:8000` in `.env` to talk to the API without the proxy (see `.env.example`).
 
-## Expanding the ESLint configuration
+**Full stack:** Register or log in → upload resume (PDF) on Mock Interview → start interview. Questions and scoring use **Gemini** via the backend; results and history are stored in **PostgreSQL** and shown on **Analytics**.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Edit styles per file
+
+| JSX | CSS (imported at top of JSX) |
+|-----|------------------------------|
+| `pages/Home.jsx` | `pages/Home.css` |
+| `pages/MockInterview.jsx` | `pages/MockInterview.css` |
+| `pages/StudyAssistant.jsx` | `pages/StudyAssistant.css` |
+| `pages/Analytics.jsx` | `pages/Analytics.css` |
+| `pages/Login.jsx` | `pages/Login.css` |
+| `pages/Register.jsx` | `pages/Register.css` |
+| `pages/NotFound.jsx` | `pages/NotFound.css` |
+| `components/Navbar.jsx` | `components/Navbar.css` |
+| `components/Footer.jsx` | `components/Footer.css` |
+| `components/Layout.jsx` | `components/Layout.css` |
+| `App.jsx` | `App.css` (shell + toasts only) |
+
+Example: change the home page → edit **`src/pages/Home.css`** only.
+
+Each CSS file includes its own colors and buttons for that screen. Navbar/Footer styles are in their component CSS files.

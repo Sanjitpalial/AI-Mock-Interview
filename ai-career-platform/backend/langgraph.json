@@ -1,0 +1,15 @@
+{
+  "dependencies": ["."],
+
+  "graphs": {
+
+    "resume_agent":
+      "./app/agents/resume_agent.py:analyze_resume",
+
+    "interview_agent":
+      "./app/agents/interview_agent.py:interview_graph"
+
+  },
+
+  "env": ".env"
+}
